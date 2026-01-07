@@ -45,3 +45,43 @@ export const getFontSize = async () => {
         return 18;
     }
 };
+
+const LANGUAGE_KEY = '@quran_language';
+
+export const saveLanguage = async (lang) => {
+    try {
+        await AsyncStorage.setItem(LANGUAGE_KEY, lang);
+    } catch (e) {
+        console.error('Error saving language', e);
+    }
+};
+
+export const getLanguage = async () => {
+    try {
+        const value = await AsyncStorage.getItem(LANGUAGE_KEY);
+        return value !== null ? value : 'en';
+    } catch (e) {
+        console.error('Error getting language', e);
+        return 'en';
+    }
+};
+
+export const SHOW_TRANSLITERATION_KEY = 'show_transliteration';
+
+export const saveShowTransliteration = async (show) => {
+    try {
+        await AsyncStorage.setItem(SHOW_TRANSLITERATION_KEY, JSON.stringify(show));
+    } catch (e) {
+        console.error('Error saving transliteration setting', e);
+    }
+};
+
+export const getShowTransliteration = async () => {
+    try {
+        const value = await AsyncStorage.getItem(SHOW_TRANSLITERATION_KEY);
+        return value !== null ? JSON.parse(value) : true;
+    } catch (e) {
+        console.error('Error getting transliteration setting', e);
+        return true;
+    }
+};

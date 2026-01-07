@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "@expo-google-fonts/amiri": "^0.4.1",
-    "@expo-google-fonts/inter": "^0.4.2",
+    "@expo-google-fonts/lora": "^0.4.2",
+    "@expo-google-fonts/outfit": "^0.4.3",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-navigation/drawer": "^7.7.10",
     "@react-navigation/native": "^7.1.26",

@@ -4,13 +4,17 @@ import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { StatusBar } from 'expo-status-bar';
-import { useFonts, Inter_400Regular, Inter_600SemiBold } from '@expo-google-fonts/inter';
+import { useFonts, Outfit_400Regular, Outfit_600SemiBold, Outfit_700Bold } from '@expo-google-fonts/outfit';
+import { Lora_400Regular } from '@expo-google-fonts/lora';
 import { Amiri_400Regular, Amiri_700Bold } from '@expo-google-fonts/amiri';
 import * as SplashScreen from 'expo-splash-screen';
 
 import ChapterScreen from './src/screens/ChapterScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
 import DrawerContent from './src/components/DrawerContent';
-import { getLastRead } from './src/utils/storage';
+import HeaderTitle from './src/components/HeaderTitle';
+import { getLastRead, getLanguage } from './src/utils/storage';
+import { getChapterIndex } from './src/utils/languageMappings';
 import { COLORS } from './src/constants/theme';
 
 const Drawer = createDrawerNavigator();
@@ -21,8 +25,10 @@ export default function App() {
     const [initialRouteParams, setInitialRouteParams] = useState(null);
 
     let [fontsLoaded] = useFonts({
-        Inter_400Regular,
-        Inter_600SemiBold,
+        Outfit_400Regular,
+        Outfit_600SemiBold,
+        Outfit_700Bold,
+        Lora_400Regular,
         Amiri_400Regular,
         Amiri_700Bold,
     });
@@ -30,10 +36,13 @@ export default function App() {
     useEffect(() => {
         async function prepare() {
             try {
-                const lastReadData = await getLastRead();
+                const [lastReadData, lang] = await Promise.all([
+                    getLastRead(),
+                    getLanguage()
+                ]);
+                const chapters = getChapterIndex(lang);
                 if (lastReadData) {
                     const { chapterId, verseId } = lastReadData;
-                    const chapters = require('./assets/data/chapters/en/index.json');
                     const chapter = chapters.find(c => Number(c.id) === Number(chapterId));
                     if (chapter) {
                         setInitialRouteParams({
@@ -41,16 +50,19 @@ export default function App() {
                             chapterName: chapter.name,
                             chapterTransliteration: chapter.transliteration,
                             chapterTranslation: chapter.translation,
+                            language: lang,
                             initialVerseId: verseId,
                         });
                     }
                 } else {
                     // Default to Al-Fatihah
+                    const chapter = chapters.find(c => Number(c.id) === 1) || chapters[0];
                     setInitialRouteParams({
-                        chapterId: 1,
-                        chapterName: 'الفاتحة',
-                        chapterTransliteration: 'Al-Fatihah',
-                        chapterTranslation: 'The Opener',
+                        chapterId: chapter.id,
+                        chapterName: chapter.name,
+                        chapterTransliteration: chapter.transliteration,
+                        chapterTranslation: chapter.translation,
+                        language: lang,
                         initialVerseId: 1,
                     });
                 }
@@ -84,9 +96,9 @@ export default function App() {
                             borderBottomWidth: 1,
                             borderBottomColor: COLORS.border,
                         },
-                        headerTintColor: COLORS.textPrimary,
+                        headerTintColor: COLORS.accent,
                         headerTitleStyle: {
-                            fontFamily: 'Inter_600SemiBold',
+                            fontFamily: 'Outfit_700Bold',
                         },
                         drawerStyle: {
                             width: '80%',
@@ -97,7 +109,25 @@ export default function App() {
                         name="Chapter"
                         component={ChapterScreen}
                         initialParams={initialRouteParams}
-                        options={{ title: 'Quran Reader' }}
+                        options={({ route }) => ({
+                            headerTitle: () => (
+                                <HeaderTitle
+                                    chapterId={route.params?.chapterId}
+                                    chapterName={route.params?.chapterName}
+                                    chapterTransliteration={route.params?.chapterTransliteration}
+                                    chapterTranslation={route.params?.chapterTranslation}
+                                />
+                            ),
+                            headerTitleAlign: 'left',
+                        })}
+                    />
+                    <Drawer.Screen
+                        name="Settings"
+                        component={SettingsScreen}
+                        options={{
+                            title: 'Settings',
+                            headerShown: false // We use a custom header in SettingsScreen
+                        }}
                     />
                 </Drawer.Navigator>
             </NavigationContainer>

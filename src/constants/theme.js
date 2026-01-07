@@ -4,7 +4,8 @@ export const COLORS = {
   textPrimary: '#212121',
   textSecondary: '#757575',
   border: '#E0E0E0',
-  accent: '#424242',
+  accent: '#F57C00', // Vibrant Orange
+  activeItemBackground: '#FFF3E0', // Very Light Orange
 };
 
 export const SPACING = {
