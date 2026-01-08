@@ -34,7 +34,7 @@ A premium, eye-friendly Quran reading application built with **React Native** an
 ```text
 My-Quran/
 ├── assets/
-│   └── data/           # Quranic data (Chapters, Verses, Index) in JSON format
+│   └── data/           # Quranic data (Chapters) in JSON format
 ├── src/
 │   ├── components/     # UI components (DrawerContent, HeaderTitle, etc.)
 │   ├── constants/      # Theme, colors, and global spacing definitions
