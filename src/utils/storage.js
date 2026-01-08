@@ -85,3 +85,23 @@ export const getShowTransliteration = async () => {
         return true;
     }
 };
+
+const QURAN_STYLE_KEY = '@quran_style';
+
+export const saveQuranStyle = async (style) => {
+    try {
+        await AsyncStorage.setItem(QURAN_STYLE_KEY, style);
+    } catch (e) {
+        console.error('Error saving quran style', e);
+    }
+};
+
+export const getQuranStyle = async () => {
+    try {
+        const value = await AsyncStorage.getItem(QURAN_STYLE_KEY);
+        return value !== null ? value : 'Uthmani';
+    } catch (e) {
+        console.error('Error getting quran style', e);
+        return 'Uthmani';
+    }
+};

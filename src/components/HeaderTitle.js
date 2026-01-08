@@ -1,12 +1,25 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text } from 'react-native';
 import { COLORS } from '../constants/theme';
+import { getQuranStyle } from '../utils/storage';
 
 const HeaderTitle = ({ chapterId, chapterName, chapterTransliteration, chapterTranslation }) => {
+    const [quranStyle, setQuranStyle] = useState('Uthmani');
+
+    useEffect(() => {
+        const fetchStyle = async () => {
+            const style = await getQuranStyle();
+            setQuranStyle(style);
+        };
+        fetchStyle();
+    }, []);
+
+    const arabicFont = quranStyle === 'Uthmani' ? 'Amiri_700Bold' : 'NotoNaskhArabic_700Bold';
+
     return (
         <View style={styles.container}>
             <Text style={styles.chapterName} numberOfLines={1}>
-                {chapterId}. {chapterTransliteration} <Text style={styles.arabicName}>({chapterName})</Text>
+                {chapterId}. {chapterTransliteration} <Text style={[styles.arabicName, { fontFamily: arabicFont }]}>({chapterName})</Text>
             </Text>
             <Text style={styles.chapterTranslation} numberOfLines={1}>{chapterTranslation}</Text>
         </View>
@@ -26,7 +39,6 @@ const styles = StyleSheet.create({
         textAlign: 'left',
     },
     arabicName: {
-        fontFamily: 'Amiri_700Bold',
         fontSize: 14,
     },
     chapterTranslation: {

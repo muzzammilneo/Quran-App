@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Switch } from 're
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING } from '../constants/theme';
-import { getFontSize, saveFontSize, getLanguage, saveLanguage, getShowTransliteration, saveShowTransliteration } from '../utils/storage';
+import { getFontSize, saveFontSize, getLanguage, saveLanguage, getShowTransliteration, saveShowTransliteration, getQuranStyle, saveQuranStyle } from '../utils/storage';
 import { LANGUAGES, getLocalizedString } from '../utils/languageMappings';
 
 const SettingsScreen = ({ navigation }) => {
@@ -11,6 +11,7 @@ const SettingsScreen = ({ navigation }) => {
     const [fontSize, setFontSize] = useState(18);
     const [language, setLanguage] = useState('en');
     const [showTransliteration, setShowTransliteration] = useState(true);
+    const [quranStyle, setQuranStyle] = useState('Uthmani');
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     useEffect(() => {
@@ -18,14 +19,16 @@ const SettingsScreen = ({ navigation }) => {
     }, []);
 
     const loadSettings = async () => {
-        const [size, lang, showTrans] = await Promise.all([
+        const [size, lang, showTrans, style] = await Promise.all([
             getFontSize(),
             getLanguage(),
-            getShowTransliteration()
+            getShowTransliteration(),
+            getQuranStyle()
         ]);
         setFontSize(size);
         setLanguage(lang);
         setShowTransliteration(showTrans);
+        setQuranStyle(style);
     };
 
     const handleLanguageChange = (langId) => {
@@ -39,7 +42,16 @@ const SettingsScreen = ({ navigation }) => {
         saveShowTransliteration(value);
     };
 
+    const handleQuranStyleChange = (style) => {
+        setQuranStyle(style);
+        saveQuranStyle(style);
+    };
+
     const selectedLanguageName = LANGUAGES.find(l => l.id === language)?.name || 'English';
+
+    const getArabicFont = () => {
+        return quranStyle === 'Uthmani' ? 'Amiri_400Regular' : 'NotoNaskhArabic_400Regular';
+    };
 
     const adjustFontSize = (delta) => {
         const newSize = Math.max(12, Math.min(40, fontSize + delta));
@@ -101,8 +113,7 @@ const SettingsScreen = ({ navigation }) => {
                                             language === lang.id && styles.activeDropdownItemText
                                         ]}>
                                             {lang.name}
-                                        </Text>
-                                        {language === lang.id && (
+                                        </Text>{language === lang.id && (
                                             <Ionicons name="checkmark" size={18} color={COLORS.accent} />
                                         )}
                                     </TouchableOpacity>
@@ -113,7 +124,25 @@ const SettingsScreen = ({ navigation }) => {
                 </View>
 
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>{getLocalizedString(language, 'readingFontSize')}</Text>
+                    <Text style={styles.sectionTitle}>{getLocalizedString(language, 'readingPreferences') || 'Reading Preferences'}</Text>
+
+                    <View style={styles.styleSelectorContainer}>
+                        <Text style={styles.settingLabel}>{getLocalizedString(language, 'quranStyle') || 'Quran Font Style'}</Text>
+                        <View style={styles.styleButtons}>
+                            <TouchableOpacity
+                                style={[styles.styleButton, quranStyle === 'Uthmani' && styles.activeStyleButton]}
+                                onPress={() => handleQuranStyleChange('Uthmani')}
+                            >
+                                <Text style={[styles.styleButtonText, quranStyle === 'Uthmani' && styles.activeStyleButtonText]}>Uthmani</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.styleButton, quranStyle === 'IndoPak' && styles.activeStyleButton]}
+                                onPress={() => handleQuranStyleChange('IndoPak')}
+                            >
+                                <Text style={[styles.styleButtonText, quranStyle === 'IndoPak' && styles.activeStyleButtonText]}>IndoPak</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
 
                     <View style={styles.settingItem}>
                         <View style={styles.settingLabelContainer}>
@@ -148,7 +177,7 @@ const SettingsScreen = ({ navigation }) => {
                     <View style={styles.previewSection}>
                         <Text style={styles.previewLabel}>{getLocalizedString(language, 'preview')}</Text>
                         <View style={styles.previewBox}>
-                            <Text style={[styles.previewArabic, { fontSize: fontSize + 8 }]}>
+                            <Text style={[styles.previewArabic, { fontSize: fontSize + 8, fontFamily: getArabicFont() }]}>
                                 بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ <Text style={styles.verseNumber}>1</Text>
                             </Text>
 
@@ -239,12 +268,14 @@ const styles = StyleSheet.create({
         color: COLORS.textPrimary,
         fontWeight: '500',
     },
+    settingDescription: {
+        fontSize: 12,
+        color: COLORS.textSecondary,
+        marginTop: 2,
+    },
     fontSizeSettingItem: {
         paddingTop: SPACING.md,
         borderBottomColor: COLORS.background,
-    },
-    settingLabelContainer: {
-        marginBottom: SPACING.md,
     },
     fontControlsContainer: {
         flexDirection: 'row',
@@ -268,11 +299,6 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
         shadowRadius: 2,
-    },
-    fontButtonText: {
-        fontSize: 18,
-        color: COLORS.accent,
-        fontWeight: 'bold',
     },
     fontSizeDisplay: {
         paddingHorizontal: 12,
@@ -303,7 +329,6 @@ const styles = StyleSheet.create({
         color: COLORS.textPrimary,
         marginBottom: SPACING.sm,
         lineHeight: 50,
-        fontFamily: 'Amiri_400Regular',
     },
     previewTransliteration: {
         color: '#424242',
@@ -322,6 +347,41 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: COLORS.textSecondary,
         fontFamily: 'Outfit_400Regular',
+    },
+    styleSelectorContainer: {
+        marginBottom: SPACING.md,
+        paddingBottom: SPACING.sm,
+        borderBottomWidth: 1,
+        borderBottomColor: COLORS.background,
+    },
+    styleButtons: {
+        flexDirection: 'row',
+        marginTop: SPACING.sm,
+        backgroundColor: COLORS.background,
+        padding: 4,
+        borderRadius: 10,
+    },
+    styleButton: {
+        flex: 1,
+        paddingVertical: 10,
+        alignItems: 'center',
+        borderRadius: 8,
+    },
+    activeStyleButton: {
+        backgroundColor: COLORS.surface,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+    },
+    styleButtonText: {
+        fontSize: 14,
+        color: COLORS.textSecondary,
+        fontFamily: 'Outfit_600SemiBold',
+    },
+    activeStyleButtonText: {
+        color: COLORS.accent,
     },
     dropdownHeader: {
         flexDirection: 'row',
@@ -379,10 +439,10 @@ const styles = StyleSheet.create({
         color: COLORS.accent,
         fontWeight: '600',
     },
-    infoText: {
-        fontSize: 14,
+    settingValue: {
+        fontSize: 16,
         color: COLORS.textSecondary,
-        lineHeight: 20,
+        fontFamily: 'Outfit_600SemiBold',
     },
 });
 

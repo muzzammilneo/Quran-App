@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, useAnimatedStyle, useAnimatedScrollHandler } from 'react-native-reanimated';
 import { useFocusEffect } from '@react-navigation/native';
 import { COLORS, SPACING } from '../constants/theme';
-import { getFontSize, saveFontSize, saveLastRead, getLanguage, getShowTransliteration } from '../utils/storage';
+import { getFontSize, saveFontSize, saveLastRead, getLanguage, getShowTransliteration, getQuranStyle } from '../utils/storage';
 import { getChapterData, getChapterIndex, getLocalizedString } from '../utils/languageMappings';
 
 const ChapterScreen = ({ route, navigation }) => {
@@ -15,6 +15,7 @@ const ChapterScreen = ({ route, navigation }) => {
     const [loading, setLoading] = useState(true);
     const [fontSize, setFontSize] = useState(18);
     const [showTransliteration, setShowTransliteration] = useState(true);
+    const [quranStyle, setQuranStyle] = useState('Uthmani');
     const [language, setLanguage] = useState('en');
     const scrollY = useSharedValue(0);
     const contentHeight = useSharedValue(0);
@@ -131,12 +132,14 @@ const ChapterScreen = ({ route, navigation }) => {
     };
 
     const loadSettings = async () => {
-        const [size, showTrans] = await Promise.all([
+        const [size, showTrans, style] = await Promise.all([
             getFontSize(),
-            getShowTransliteration()
+            getShowTransliteration(),
+            getQuranStyle()
         ]);
         setFontSize(size);
         setShowTransliteration(showTrans);
+        setQuranStyle(style);
     };
 
     const handleNextChapter = () => {
@@ -171,8 +174,7 @@ const ChapterScreen = ({ route, navigation }) => {
                 >
                     <Text style={styles.nextButtonText}>
                         {isLastChapter ? getLocalizedString(language, 'backToBeginning') : getLocalizedString(language, 'nextChapter')}
-                    </Text>
-                    <Ionicons
+                    </Text><Ionicons
                         name={isLastChapter ? "menu-outline" : "chevron-forward"}
                         size={20}
                         color={COLORS.surface}
@@ -202,7 +204,7 @@ const ChapterScreen = ({ route, navigation }) => {
                 ref={flatListRef}
                 data={data?.verses}
                 keyExtractor={(item) => `${chapterId}-${item.id}`}
-                extraData={`${chapterId}-${fontSize}-${showTransliteration}`}
+                extraData={`${chapterId}-${fontSize}-${showTransliteration}-${quranStyle}`}
                 contentContainerStyle={styles.scrollContent}
                 onViewableItemsChanged={onViewableItemsChanged}
                 viewabilityConfig={viewabilityConfig}
@@ -221,7 +223,7 @@ const ChapterScreen = ({ route, navigation }) => {
                     });
                 }}
                 renderItem={({ item: verse }) => (
-                    <VerseItem verse={verse} fontSize={fontSize} chapterId={chapterId} showTransliteration={showTransliteration} />
+                    <VerseItem verse={verse} fontSize={fontSize} chapterId={chapterId} showTransliteration={showTransliteration} quranStyle={quranStyle} />
                 )}
                 ListFooterComponent={renderFooter}
             />
@@ -266,7 +268,6 @@ const styles = StyleSheet.create({
         color: COLORS.textPrimary,
         marginBottom: SPACING.sm,
         lineHeight: 50,
-        fontFamily: 'Amiri_400Regular',
     },
     translationText: {
         color: COLORS.textSecondary,
@@ -312,22 +313,26 @@ const styles = StyleSheet.create({
     },
 });
 
-const VerseItem = React.memo(({ verse, fontSize, chapterId, showTransliteration }) => (
-    <View style={styles.verseContainer}>
-        <Text style={[styles.arabicText, { fontSize: fontSize + 8 }]}>
-            {verse.text} <Text style={styles.verseNumber}>{verse.id}</Text>
-        </Text>
+const VerseItem = React.memo(({ verse, fontSize, chapterId, showTransliteration, quranStyle }) => {
+    const arabicFont = quranStyle === 'Uthmani' ? 'Amiri_400Regular' : 'NotoNaskhArabic_400Regular';
 
-        {showTransliteration && (
-            <Text style={[styles.transliterationText, { fontSize: fontSize - 2 }]}>
-                {verse.transliteration}
+    return (
+        <View style={styles.verseContainer}>
+            <Text style={[styles.arabicText, { fontSize: fontSize + 8, fontFamily: arabicFont }]}>
+                {verse.text} <Text style={styles.verseNumber}>{verse.id}</Text>
             </Text>
-        )}
 
-        <Text style={[styles.translationText, { fontSize: fontSize }]}>
-            {verse.translation}
-        </Text>
-    </View>
-));
+            {showTransliteration && (
+                <Text style={[styles.transliterationText, { fontSize: fontSize - 2 }]}>
+                    {verse.transliteration}
+                </Text>
+            )}
+
+            <Text style={[styles.translationText, { fontSize: fontSize }]}>
+                {verse.translation}
+            </Text>
+        </View>
+    );
+});
 
 export default ChapterScreen;

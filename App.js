@@ -7,6 +7,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useFonts, Outfit_400Regular, Outfit_600SemiBold, Outfit_700Bold } from '@expo-google-fonts/outfit';
 import { Lora_400Regular } from '@expo-google-fonts/lora';
 import { Amiri_400Regular, Amiri_700Bold } from '@expo-google-fonts/amiri';
+import { NotoNaskhArabic_400Regular, NotoNaskhArabic_700Bold } from '@expo-google-fonts/noto-naskh-arabic';
 import * as SplashScreen from 'expo-splash-screen';
 
 import ChapterScreen from './src/screens/ChapterScreen';
@@ -21,7 +22,6 @@ const Drawer = createDrawerNavigator();
 SplashScreen.preventAutoHideAsync();
 
 export default function App() {
-    const [lastRead, setLastRead] = useState(null);
     const [initialRouteParams, setInitialRouteParams] = useState(null);
 
     let [fontsLoaded] = useFonts({
@@ -31,6 +31,8 @@ export default function App() {
         Lora_400Regular,
         Amiri_400Regular,
         Amiri_700Bold,
+        NotoNaskhArabic_400Regular,
+        NotoNaskhArabic_700Bold,
     });
 
     useEffect(() => {

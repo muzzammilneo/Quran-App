@@ -6,13 +6,14 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useDrawerStatus } from '@react-navigation/drawer';
 import { COLORS, SPACING } from '../constants/theme';
 import { getChapterIndex, getLocalizedString } from '../utils/languageMappings';
-import { getLanguage } from '../utils/storage';
+import { getLanguage, getQuranStyle } from '../utils/storage';
 
 const DrawerContent = (props) => {
     const { navigation, state } = props;
     const insets = useSafeAreaInsets();
     const [chapters, setChapters] = useState([]);
     const [language, setLanguage] = useState('en');
+    const [quranStyle, setQuranStyle] = useState('Uthmani');
 
     const drawerStatus = useDrawerStatus();
     const activeChapterId = state.routes[state.index]?.params?.chapterId;
@@ -24,14 +25,19 @@ const DrawerContent = (props) => {
     }, [drawerStatus]);
 
     const loadChapters = async () => {
-        const lang = await getLanguage();
+        const [lang, style] = await Promise.all([
+            getLanguage(),
+            getQuranStyle()
+        ]);
         const index = getChapterIndex(lang);
         setChapters(index);
         setLanguage(lang);
+        setQuranStyle(style);
     };
 
     const renderItem = ({ item }) => {
         const isActive = item.id === activeChapterId;
+        const arabicFont = quranStyle === 'Uthmani' ? 'Amiri_400Regular' : 'NotoNaskhArabic_400Regular';
 
         return (
             <TouchableOpacity
@@ -54,7 +60,7 @@ const DrawerContent = (props) => {
                     <Text style={[styles.transliteration, isActive && styles.activeText]}>{item.transliteration}</Text>
                     <Text style={styles.translation}>{item.translation} • {item.total_verses} {getLocalizedString(language, 'verses')}</Text>
                 </View>
-                <Text style={[styles.arabicName, isActive && styles.activeText]}>{item.name}</Text>
+                <Text style={[styles.arabicName, isActive && styles.activeText, { fontFamily: arabicFont }]}>{item.name}</Text>
             </TouchableOpacity>
         );
     };
@@ -157,7 +163,6 @@ const styles = StyleSheet.create({
     arabicName: {
         fontSize: 18,
         color: COLORS.textPrimary,
-        fontFamily: 'Amiri_400Regular',
     },
 });
 

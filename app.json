@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "quran-app",
-    "slug": "quran-app",
+    "name": "My Qu'ran",
+    "slug": "My Qu'ran",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,6 +16,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.muzzammil.quranapp",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -27,6 +28,11 @@
     },
     "plugins": [
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "5f653f9c-833a-4684-9752-25cd198f66e3"
+      }
+    }
   }
 }
