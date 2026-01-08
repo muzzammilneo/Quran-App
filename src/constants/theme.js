@@ -1,11 +1,22 @@
 export const COLORS = {
-  background: '#F5F5F5',
-  surface: '#FFFFFF',
-  textPrimary: '#212121',
-  textSecondary: '#757575',
-  border: '#E0E0E0',
-  accent: '#F57C00', // Vibrant Orange
-  activeItemBackground: '#FFF3E0', // Very Light Orange
+  light: {
+    background: '#F5F5F5',
+    surface: '#FFFFFF',
+    textPrimary: '#212121',
+    textSecondary: '#757575',
+    border: '#E0E0E0',
+    accent: '#F57C00', // Vibrant Orange
+    activeItemBackground: '#FFF3E0', // Very Light Orange
+  },
+  dark: {
+    background: '#121212',
+    surface: '#1E1E1E',
+    textPrimary: '#E0E0E0',
+    textSecondary: '#B0B0B0',
+    border: '#333333',
+    accent: '#FF9800', // Brighter Orange for dark mode
+    activeItemBackground: '#3F2C1B', // Darker Orange tint
+  }
 };
 
 export const SPACING = {

@@ -1,6 +1,6 @@
 import 'react-native-gesture-handler';
 import React, { useState, useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { StatusBar } from 'expo-status-bar';
@@ -17,11 +17,13 @@ import HeaderTitle from './src/components/HeaderTitle';
 import { getLastRead, getLanguage } from './src/utils/storage';
 import { getChapterIndex } from './src/utils/languageMappings';
 import { COLORS } from './src/constants/theme';
+import { ThemeProvider, useTheme } from './src/utils/ThemeContext';
 
 const Drawer = createDrawerNavigator();
 SplashScreen.preventAutoHideAsync();
 
-export default function App() {
+function AppContent() {
+    const { theme, colors } = useTheme();
     const [initialRouteParams, setInitialRouteParams] = useState(null);
 
     let [fontsLoaded] = useFonts({
@@ -44,8 +46,9 @@ export default function App() {
                 ]);
                 const chapters = getChapterIndex(lang);
                 if (lastReadData) {
-                    const { chapterId, verseId } = lastReadData;
-                    const chapter = chapters.find(c => Number(c.id) === Number(chapterId));
+                    const chapterId = Number(lastReadData.chapterId);
+                    const verseId = Number(lastReadData.verseId);
+                    const chapter = chapters.find(c => Number(c.id) === chapterId);
                     if (chapter) {
                         setInitialRouteParams({
                             chapterId: chapter.id,
@@ -57,7 +60,6 @@ export default function App() {
                         });
                     }
                 } else {
-                    // Default to Al-Fatihah
                     const chapter = chapters.find(c => Number(c.id) === 1) || chapters[0];
                     setInitialRouteParams({
                         chapterId: chapter.id,
@@ -84,55 +86,76 @@ export default function App() {
         return null;
     }
 
+    const navigationTheme = {
+        ...(theme === 'dark' ? DarkTheme : DefaultTheme),
+        colors: {
+            ...(theme === 'dark' ? DarkTheme.colors : DefaultTheme.colors),
+            background: colors.background,
+            card: colors.surface,
+            text: colors.textPrimary,
+            border: colors.border,
+            primary: colors.accent,
+        },
+    };
+
+    return (
+        <NavigationContainer theme={navigationTheme}>
+            <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+            <Drawer.Navigator
+                drawerContent={(props) => <DrawerContent {...props} />}
+                screenOptions={{
+                    headerStyle: {
+                        backgroundColor: colors.surface,
+                        elevation: 0,
+                        shadowOpacity: 0,
+                        borderBottomWidth: 1,
+                        borderBottomColor: colors.border,
+                    },
+                    headerTintColor: colors.accent,
+                    headerTitleStyle: {
+                        fontFamily: 'Outfit_700Bold',
+                    },
+                    drawerStyle: {
+                        width: '80%',
+                        backgroundColor: colors.surface,
+                    },
+                }}
+            >
+                <Drawer.Screen
+                    name="Chapter"
+                    component={ChapterScreen}
+                    initialParams={initialRouteParams}
+                    options={({ route }) => ({
+                        headerTitle: () => (
+                            <HeaderTitle
+                                chapterId={route.params?.chapterId}
+                                chapterName={route.params?.chapterName}
+                                chapterTransliteration={route.params?.chapterTransliteration}
+                                chapterTranslation={route.params?.chapterTranslation}
+                            />
+                        ),
+                        headerTitleAlign: 'left',
+                    })}
+                />
+                <Drawer.Screen
+                    name="Settings"
+                    component={SettingsScreen}
+                    options={{
+                        title: 'Settings',
+                        headerShown: false
+                    }}
+                />
+            </Drawer.Navigator>
+        </NavigationContainer>
+    );
+}
+
+export default function App() {
     return (
         <SafeAreaProvider>
-            <NavigationContainer>
-                <StatusBar style="dark" />
-                <Drawer.Navigator
-                    drawerContent={(props) => <DrawerContent {...props} />}
-                    screenOptions={{
-                        headerStyle: {
-                            backgroundColor: COLORS.surface,
-                            elevation: 0,
-                            shadowOpacity: 0,
-                            borderBottomWidth: 1,
-                            borderBottomColor: COLORS.border,
-                        },
-                        headerTintColor: COLORS.accent,
-                        headerTitleStyle: {
-                            fontFamily: 'Outfit_700Bold',
-                        },
-                        drawerStyle: {
-                            width: '80%',
-                        },
-                    }}
-                >
-                    <Drawer.Screen
-                        name="Chapter"
-                        component={ChapterScreen}
-                        initialParams={initialRouteParams}
-                        options={({ route }) => ({
-                            headerTitle: () => (
-                                <HeaderTitle
-                                    chapterId={route.params?.chapterId}
-                                    chapterName={route.params?.chapterName}
-                                    chapterTransliteration={route.params?.chapterTransliteration}
-                                    chapterTranslation={route.params?.chapterTranslation}
-                                />
-                            ),
-                            headerTitleAlign: 'left',
-                        })}
-                    />
-                    <Drawer.Screen
-                        name="Settings"
-                        component={SettingsScreen}
-                        options={{
-                            title: 'Settings',
-                            headerShown: false // We use a custom header in SettingsScreen
-                        }}
-                    />
-                </Drawer.Navigator>
-            </NavigationContainer>
+            <ThemeProvider>
+                <AppContent />
+            </ThemeProvider>
         </SafeAreaProvider>
     );
 }

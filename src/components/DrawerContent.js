@@ -1,15 +1,16 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, FlatList, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native';
 import { useDrawerStatus } from '@react-navigation/drawer';
-import { COLORS, SPACING } from '../constants/theme';
+import { SPACING } from '../constants/theme';
 import { getChapterIndex, getLocalizedString } from '../utils/languageMappings';
 import { getLanguage, getQuranStyle } from '../utils/storage';
+import { useTheme } from '../utils/ThemeContext';
 
 const DrawerContent = (props) => {
     const { navigation, state } = props;
+    const { colors } = useTheme();
     const insets = useSafeAreaInsets();
     const [chapters, setChapters] = useState([]);
     const [language, setLanguage] = useState('en');
@@ -41,7 +42,7 @@ const DrawerContent = (props) => {
 
         return (
             <TouchableOpacity
-                style={[styles.item, isActive && styles.activeItem]}
+                style={[styles.item, { borderBottomColor: colors.background }, isActive && { backgroundColor: colors.activeItemBackground }]}
                 onPress={() => {
                     navigation.navigate('Chapter', {
                         chapterId: item.id,
@@ -53,27 +54,27 @@ const DrawerContent = (props) => {
                     });
                 }}
             >
-                <View style={[styles.numberContainer, isActive && styles.activeNumberContainer]}>
-                    <Text style={[styles.number, isActive && styles.activeNumber]}>{item.id}</Text>
+                <View style={[styles.numberContainer, { backgroundColor: colors.background }, isActive && { backgroundColor: colors.accent }]}>
+                    <Text style={[styles.number, { color: colors.textSecondary }, isActive && { color: colors.surface }]}>{item.id}</Text>
                 </View>
                 <View style={styles.textContainer}>
-                    <Text style={[styles.transliteration, isActive && styles.activeText]}>{item.transliteration}</Text>
-                    <Text style={styles.translation}>{item.translation} • {item.total_verses} {getLocalizedString(language, 'verses')}</Text>
+                    <Text style={[styles.transliteration, { color: colors.textPrimary }, isActive && { color: colors.accent }]}>{item.transliteration}</Text>
+                    <Text style={[styles.translation, { color: colors.textSecondary }]}>{item.translation} • {item.total_verses} {getLocalizedString(language, 'verses')}</Text>
                 </View>
-                <Text style={[styles.arabicName, isActive && styles.activeText, { fontFamily: arabicFont }]}>{item.name}</Text>
+                <Text style={[styles.arabicName, { color: colors.textPrimary }, isActive && { color: colors.accent }, { fontFamily: arabicFont }]}>{item.name}</Text>
             </TouchableOpacity>
         );
     };
 
     return (
-        <View style={[styles.container, { paddingTop: insets.top + 4 }]}>
-            <View style={styles.header}>
-                <Text style={styles.title}>{getLocalizedString(language, 'quranChapters')}</Text>
+        <View style={[styles.container, { backgroundColor: colors.surface, paddingTop: insets.top + 4 }]}>
+            <View style={[styles.header, { borderBottomColor: colors.border }]}>
+                <Text style={[styles.title, { color: colors.textPrimary }]}>{getLocalizedString(language, 'quranChapters')}</Text>
                 <TouchableOpacity
                     onPress={() => navigation.navigate('Settings')}
                     style={styles.settingsButton}
                 >
-                    <Ionicons name="settings-outline" size={22} color={COLORS.accent} />
+                    <Ionicons name="settings-outline" size={22} color={colors.accent} />
                 </TouchableOpacity>
             </View>
             <FlatList
@@ -90,13 +91,11 @@ const DrawerContent = (props) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.surface,
     },
     header: {
         paddingHorizontal: SPACING.md,
         paddingVertical: SPACING.sm,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.border,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -104,7 +103,6 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: COLORS.textPrimary,
     },
     settingsButton: {
         padding: 4,
@@ -117,31 +115,19 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: SPACING.md,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.background,
-    },
-    activeItem: {
-        backgroundColor: COLORS.activeItemBackground,
     },
     numberContainer: {
         width: 30,
         height: 30,
         borderRadius: 15,
-        backgroundColor: COLORS.background,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: SPACING.md,
     },
-    activeNumberContainer: {
-        backgroundColor: COLORS.accent,
-    },
     number: {
         fontSize: 12,
-        color: COLORS.textSecondary,
         fontWeight: 'bold',
         fontFamily: 'Outfit_700Bold',
-    },
-    activeNumber: {
-        color: COLORS.surface,
     },
     textContainer: {
         flex: 1,
@@ -149,20 +135,14 @@ const styles = StyleSheet.create({
     transliteration: {
         fontSize: 16,
         fontWeight: '600',
-        color: COLORS.textPrimary,
         fontFamily: 'Outfit_600SemiBold',
-    },
-    activeText: {
-        color: COLORS.accent,
     },
     translation: {
         fontSize: 12,
-        color: COLORS.textSecondary,
         fontFamily: 'Outfit_400Regular',
     },
     arabicName: {
         fontSize: 18,
-        color: COLORS.textPrimary,
     },
 });
 

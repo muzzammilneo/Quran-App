@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Switch } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, SPACING } from '../constants/theme';
+import { SPACING } from '../constants/theme';
 import { getFontSize, saveFontSize, getLanguage, saveLanguage, getShowTransliteration, saveShowTransliteration, getQuranStyle, saveQuranStyle } from '../utils/storage';
 import { LANGUAGES, getLocalizedString } from '../utils/languageMappings';
+import { useTheme } from '../utils/ThemeContext';
 
 const SettingsScreen = ({ navigation }) => {
+    const { colors, theme, toggleTheme } = useTheme();
     const insets = useSafeAreaInsets();
     const [fontSize, setFontSize] = useState(18);
     const [language, setLanguage] = useState('en');
@@ -60,12 +62,12 @@ const SettingsScreen = ({ navigation }) => {
     };
 
     return (
-        <View style={styles.container}>
-            <View style={[styles.header, { paddingTop: insets.top + 4 }]}>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <View style={[styles.header, { paddingTop: insets.top + 4, backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
                 <TouchableOpacity onPress={() => navigation.openDrawer()}>
-                    <Ionicons name="menu" size={24} color={COLORS.accent} />
+                    <Ionicons name="menu" size={24} color={colors.accent} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>{getLocalizedString(language, 'settings')}</Text>
+                <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{getLocalizedString(language, 'settings')}</Text>
                 <View style={{ width: 24 }} />
             </View>
 
@@ -73,27 +75,27 @@ const SettingsScreen = ({ navigation }) => {
                 contentContainerStyle={styles.content}
                 showsVerticalScrollIndicator={false}
             >
-                <View style={[styles.section, { zIndex: 10 }]}>
-                    <Text style={styles.sectionTitle}>{getLocalizedString(language, 'translationLanguage')}</Text>
+                <View style={[styles.section, { zIndex: 10, backgroundColor: colors.surface, borderColor: colors.border }]}>
+                    <Text style={[styles.sectionTitle, { color: colors.accent }]}>{getLocalizedString(language, 'translationLanguage')}</Text>
 
                     <TouchableOpacity
-                        style={styles.dropdownHeader}
+                        style={[styles.dropdownHeader, { backgroundColor: colors.activeItemBackground, borderColor: colors.border }]}
                         onPress={() => setIsDropdownOpen(!isDropdownOpen)}
                         activeOpacity={0.7}
                     >
                         <View style={styles.dropdownHeaderContent}>
-                            <Ionicons name="language-outline" size={20} color={COLORS.accent} style={{ marginRight: 10 }} />
-                            <Text style={styles.dropdownHeaderText}>{selectedLanguageName}</Text>
+                            <Ionicons name="language-outline" size={20} color={colors.accent} style={{ marginRight: 10 }} />
+                            <Text style={[styles.dropdownHeaderText, { color: colors.textPrimary }]}>{selectedLanguageName}</Text>
                         </View>
                         <Ionicons
                             name={isDropdownOpen ? "chevron-up" : "chevron-down"}
                             size={20}
-                            color={COLORS.textSecondary}
+                            color={colors.textSecondary}
                         />
                     </TouchableOpacity>
 
                     {isDropdownOpen && (
-                        <View style={styles.dropdownMenu}>
+                        <View style={[styles.dropdownMenu, { backgroundColor: colors.surface, borderColor: colors.border, shadowColor: '#000' }]}>
                             <ScrollView
                                 style={styles.dropdownScroll}
                                 nestedScrollEnabled={true}
@@ -104,17 +106,19 @@ const SettingsScreen = ({ navigation }) => {
                                         key={lang.id}
                                         style={[
                                             styles.dropdownItem,
-                                            language === lang.id && styles.activeDropdownItem
+                                            language === lang.id && { backgroundColor: colors.activeItemBackground }
                                         ]}
                                         onPress={() => handleLanguageChange(lang.id)}
                                     >
                                         <Text style={[
                                             styles.dropdownItemText,
-                                            language === lang.id && styles.activeDropdownItemText
+                                            { color: language === lang.id ? colors.accent : colors.textSecondary },
+                                            language === lang.id && { fontWeight: '600' }
                                         ]}>
                                             {lang.name}
-                                        </Text>{language === lang.id && (
-                                            <Ionicons name="checkmark" size={18} color={COLORS.accent} />
+                                        </Text>
+                                        {language === lang.id && (
+                                            <Ionicons name="checkmark" size={18} color={colors.accent} />
                                         )}
                                     </TouchableOpacity>
                                 ))}
@@ -123,86 +127,98 @@ const SettingsScreen = ({ navigation }) => {
                     )}
                 </View>
 
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>{getLocalizedString(language, 'readingPreferences') || 'Reading Preferences'}</Text>
+                <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                    <Text style={[styles.sectionTitle, { color: colors.accent }]}>{getLocalizedString(language, 'readingPreferences') || 'Reading Preferences'}</Text>
 
-                    <View style={styles.styleSelectorContainer}>
-                        <Text style={styles.settingLabel}>{getLocalizedString(language, 'quranStyle') || 'Quran Font Style'}</Text>
-                        <View style={styles.styleButtons}>
+                    <View style={[styles.settingItem, { borderBottomColor: colors.background }]}>
+                        <View style={styles.settingLabelContainer}>
+                            <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>{getLocalizedString(language, 'darkMode') || 'Dark Mode'}</Text>
+                        </View>
+                        <Switch
+                            value={theme === 'dark'}
+                            onValueChange={toggleTheme}
+                            trackColor={{ false: colors.border, true: colors.accent + '80' }}
+                            thumbColor={theme === 'dark' ? colors.accent : '#f4f3f4'}
+                        />
+                    </View>
+
+                    <View style={[styles.styleSelectorContainer, { borderBottomColor: colors.background }]}>
+                        <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>{getLocalizedString(language, 'quranStyle') || 'Quran Font Style'}</Text>
+                        <View style={[styles.styleButtons, { backgroundColor: colors.background }]}>
                             <TouchableOpacity
-                                style={[styles.styleButton, quranStyle === 'Uthmani' && styles.activeStyleButton]}
+                                style={[styles.styleButton, quranStyle === 'Uthmani' && [styles.activeStyleButton, { backgroundColor: colors.surface, shadowColor: '#000' }]]}
                                 onPress={() => handleQuranStyleChange('Uthmani')}
                             >
-                                <Text style={[styles.styleButtonText, quranStyle === 'Uthmani' && styles.activeStyleButtonText]}>Uthmani</Text>
+                                <Text style={[styles.styleButtonText, { color: quranStyle === 'Uthmani' ? colors.accent : colors.textSecondary }]}>Uthmani</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
-                                style={[styles.styleButton, quranStyle === 'IndoPak' && styles.activeStyleButton]}
+                                style={[styles.styleButton, quranStyle === 'IndoPak' && [styles.activeStyleButton, { backgroundColor: colors.surface, shadowColor: '#000' }]]}
                                 onPress={() => handleQuranStyleChange('IndoPak')}
                             >
-                                <Text style={[styles.styleButtonText, quranStyle === 'IndoPak' && styles.activeStyleButtonText]}>IndoPak</Text>
+                                <Text style={[styles.styleButtonText, { color: quranStyle === 'IndoPak' ? colors.accent : colors.textSecondary }]}>IndoPak</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
 
-                    <View style={styles.settingItem}>
+                    <View style={[styles.settingItem, { borderBottomColor: colors.background }]}>
                         <View style={styles.settingLabelContainer}>
-                            <Text style={styles.settingLabel}>{getLocalizedString(language, 'showTransliteration')}</Text>
-                            <Text style={styles.settingDescription}>{getLocalizedString(language, 'transliterationDesc')}</Text>
+                            <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>{getLocalizedString(language, 'showTransliteration')}</Text>
+                            <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>{getLocalizedString(language, 'transliterationDesc')}</Text>
                         </View>
                         <Switch
                             value={showTransliteration}
                             onValueChange={handleTransliterationToggle}
-                            trackColor={{ false: COLORS.border, true: COLORS.accent + '80' }}
-                            thumbColor={showTransliteration ? COLORS.accent : '#f4f3f4'}
+                            trackColor={{ false: colors.border, true: colors.accent + '80' }}
+                            thumbColor={showTransliteration ? colors.accent : '#f4f3f4'}
                         />
                     </View>
 
-                    <View style={styles.fontSizeSettingItem}>
+                    <View style={[styles.fontSizeSettingItem, { borderBottomColor: colors.background }]}>
                         <View style={styles.settingLabelContainer}>
-                            <Text style={styles.settingDescription}>{getLocalizedString(language, 'fontSizeDesc')}</Text>
+                            <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>{getLocalizedString(language, 'fontSizeDesc')}</Text>
                         </View>
-                        <View style={styles.fontControlsContainer}>
-                            <TouchableOpacity onPress={() => adjustFontSize(-2)} style={styles.fontButton}>
-                                <Ionicons name="remove" size={20} color={COLORS.accent} />
+                        <View style={[styles.fontControlsContainer, { backgroundColor: colors.background }]}>
+                            <TouchableOpacity onPress={() => adjustFontSize(-2)} style={[styles.fontButton, { backgroundColor: colors.surface, borderColor: colors.border, shadowColor: '#000' }]}>
+                                <Ionicons name="remove" size={20} color={colors.accent} />
                             </TouchableOpacity>
                             <View style={styles.fontSizeDisplay}>
-                                <Text style={styles.fontSizeText}>{fontSize}</Text>
+                                <Text style={[styles.fontSizeText, { color: colors.textPrimary }]}>{fontSize}</Text>
                             </View>
-                            <TouchableOpacity onPress={() => adjustFontSize(2)} style={styles.fontButton}>
-                                <Ionicons name="add" size={20} color={COLORS.accent} />
+                            <TouchableOpacity onPress={() => adjustFontSize(2)} style={[styles.fontButton, { backgroundColor: colors.surface, borderColor: colors.border, shadowColor: '#000' }]}>
+                                <Ionicons name="add" size={20} color={colors.accent} />
                             </TouchableOpacity>
                         </View>
                     </View>
 
                     <View style={styles.previewSection}>
-                        <Text style={styles.previewLabel}>{getLocalizedString(language, 'preview')}</Text>
-                        <View style={styles.previewBox}>
-                            <Text style={[styles.previewArabic, { fontSize: fontSize + 8, fontFamily: getArabicFont() }]}>
-                                بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ <Text style={styles.verseNumber}>1</Text>
+                        <Text style={[styles.previewLabel, { color: colors.textSecondary }]}>{getLocalizedString(language, 'preview')}</Text>
+                        <View style={[styles.previewBox, { backgroundColor: colors.background }]}>
+                            <Text style={[styles.previewArabic, { fontSize: fontSize + 8, fontFamily: getArabicFont(), color: colors.textPrimary }]}>
+                                بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ <Text style={[styles.verseNumber, { color: colors.textSecondary }]}>1</Text>
                             </Text>
 
                             {showTransliteration && (
-                                <Text style={[styles.previewTransliteration, { fontSize: fontSize - 2 }]}>
+                                <Text style={[styles.previewTransliteration, { fontSize: fontSize - 2, color: colors.textSecondary }]}>
                                     Bismi Allāhi Ar-Raḥmāni Ar-Raḥīm
                                 </Text>
                             )}
 
-                            <Text style={[styles.previewTranslation, { fontSize: fontSize }]}>
+                            <Text style={[styles.previewTranslation, { fontSize: fontSize, color: colors.textPrimary }]}>
                                 {getLocalizedString(language, 'bismillahTranslation')}
                             </Text>
                         </View>
                     </View>
                 </View>
 
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>{getLocalizedString(language, 'appInformation')}</Text>
-                    <View style={styles.settingItem}>
-                        <Text style={styles.settingLabel}>{getLocalizedString(language, 'version')}</Text>
-                        <Text style={styles.settingValue}>1.0.0</Text>
+                <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                    <Text style={[styles.sectionTitle, { color: colors.accent }]}>{getLocalizedString(language, 'appInformation')}</Text>
+                    <View style={[styles.settingItem, { borderBottomColor: colors.background }]}>
+                        <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>{getLocalizedString(language, 'version')}</Text>
+                        <Text style={[styles.settingValue, { color: colors.textSecondary }]}>1.0.0</Text>
                     </View>
-                    <View style={styles.settingItem}>
-                        <Text style={styles.settingLabel}>{getLocalizedString(language, 'developer')}</Text>
-                        <Text style={styles.settingValue}>Muzzammil</Text>
+                    <View style={[styles.settingItem, { borderBottomColor: colors.background }]}>
+                        <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>{getLocalizedString(language, 'developer')}</Text>
+                        <Text style={[styles.settingValue, { color: colors.textSecondary }]}>Muzzammil</Text>
                     </View>
                 </View>
             </ScrollView>
@@ -213,7 +229,6 @@ const SettingsScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.background,
     },
     header: {
         flexDirection: 'row',
@@ -221,14 +236,11 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingHorizontal: SPACING.md,
         paddingVertical: SPACING.sm,
-        backgroundColor: COLORS.surface,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.border,
     },
     headerTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: COLORS.textPrimary,
         fontFamily: 'Outfit_700Bold',
     },
     content: {
@@ -236,16 +248,13 @@ const styles = StyleSheet.create({
     },
     section: {
         marginBottom: SPACING.xl,
-        backgroundColor: COLORS.surface,
         borderRadius: 8,
         padding: SPACING.md,
         borderWidth: 1,
-        borderColor: COLORS.border,
     },
     sectionTitle: {
         fontSize: 14,
         fontWeight: 'bold',
-        color: COLORS.accent,
         textTransform: 'uppercase',
         marginBottom: SPACING.md,
         letterSpacing: 1,
@@ -257,7 +266,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: SPACING.sm,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.background,
     },
     settingLabelContainer: {
         flex: 1,
@@ -265,37 +273,30 @@ const styles = StyleSheet.create({
     },
     settingLabel: {
         fontSize: 16,
-        color: COLORS.textPrimary,
         fontWeight: '500',
     },
     settingDescription: {
         fontSize: 12,
-        color: COLORS.textSecondary,
         marginTop: 2,
     },
     fontSizeSettingItem: {
         paddingTop: SPACING.md,
-        borderBottomColor: COLORS.background,
     },
     fontControlsContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: COLORS.background,
         borderRadius: 8,
         padding: SPACING.sm,
     },
     fontButton: {
         width: 44,
         height: 44,
-        backgroundColor: COLORS.surface,
         borderRadius: 22,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: COLORS.border,
         elevation: 1,
-        shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
         shadowRadius: 2,
@@ -306,7 +307,6 @@ const styles = StyleSheet.create({
     fontSizeText: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: COLORS.textPrimary,
     },
     previewSection: {
         marginTop: SPACING.lg,
@@ -314,50 +314,43 @@ const styles = StyleSheet.create({
     },
     previewLabel: {
         fontSize: 12,
-        color: COLORS.textSecondary,
         textTransform: 'uppercase',
         marginBottom: SPACING.sm,
         letterSpacing: 0.5,
     },
     previewBox: {
         padding: SPACING.md,
-        backgroundColor: COLORS.background,
         borderRadius: 8,
     },
     previewArabic: {
         textAlign: 'right',
-        color: COLORS.textPrimary,
         marginBottom: SPACING.sm,
         lineHeight: 50,
     },
     previewTransliteration: {
-        color: '#424242',
         fontStyle: 'italic',
         marginBottom: SPACING.xs,
         lineHeight: 24,
         fontFamily: 'Outfit_400Regular',
     },
     previewTranslation: {
-        color: COLORS.textSecondary,
         lineHeight: 24,
         letterSpacing: -0.3,
         fontFamily: 'Lora_400Regular',
     },
     verseNumber: {
         fontSize: 14,
-        color: COLORS.textSecondary,
         fontFamily: 'Outfit_400Regular',
     },
     styleSelectorContainer: {
-        marginBottom: SPACING.md,
-        paddingBottom: SPACING.sm,
+        marginTop: SPACING.md,
+        marginBottom: SPACING.lg,
+        paddingBottom: SPACING.md,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.background,
     },
     styleButtons: {
         flexDirection: 'row',
         marginTop: SPACING.sm,
-        backgroundColor: COLORS.background,
         padding: 4,
         borderRadius: 10,
     },
@@ -368,30 +361,22 @@ const styles = StyleSheet.create({
         borderRadius: 8,
     },
     activeStyleButton: {
-        backgroundColor: COLORS.surface,
         elevation: 2,
-        shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
         shadowRadius: 2,
     },
     styleButtonText: {
         fontSize: 14,
-        color: COLORS.textSecondary,
         fontFamily: 'Outfit_600SemiBold',
-    },
-    activeStyleButtonText: {
-        color: COLORS.accent,
     },
     dropdownHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: SPACING.md,
-        backgroundColor: COLORS.activeItemBackground,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: COLORS.border,
         marginTop: SPACING.xs,
     },
     dropdownHeaderContent: {
@@ -400,20 +385,16 @@ const styles = StyleSheet.create({
     },
     dropdownHeaderText: {
         fontSize: 16,
-        color: COLORS.textPrimary,
         fontWeight: '600',
         fontFamily: 'Outfit_600SemiBold',
     },
     dropdownMenu: {
         marginTop: SPACING.xs,
-        backgroundColor: COLORS.surface,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: COLORS.border,
         maxHeight: 250,
         overflow: 'hidden',
         elevation: 4,
-        shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
@@ -428,20 +409,11 @@ const styles = StyleSheet.create({
         padding: SPACING.md,
         borderRadius: 8,
     },
-    activeDropdownItem: {
-        backgroundColor: COLORS.activeItemBackground,
-    },
     dropdownItemText: {
         fontSize: 15,
-        color: COLORS.textSecondary,
-    },
-    activeDropdownItemText: {
-        color: COLORS.accent,
-        fontWeight: '600',
     },
     settingValue: {
         fontSize: 16,
-        color: COLORS.textSecondary,
         fontFamily: 'Outfit_600SemiBold',
     },
 });

@@ -4,7 +4,10 @@ const LAST_READ_KEY = '@quran_last_read';
 
 export const saveLastRead = async (chapterId, verseId = 1) => {
     try {
-        await AsyncStorage.setItem(LAST_READ_KEY, JSON.stringify({ chapterId, verseId }));
+        await AsyncStorage.setItem(LAST_READ_KEY, JSON.stringify({
+            chapterId: Number(chapterId),
+            verseId: Number(verseId)
+        }));
     } catch (e) {
         console.error('Error saving last read', e);
     }
@@ -103,5 +106,24 @@ export const getQuranStyle = async () => {
     } catch (e) {
         console.error('Error getting quran style', e);
         return 'Uthmani';
+    }
+};
+const THEME_KEY = '@quran_theme';
+
+export const saveTheme = async (theme) => {
+    try {
+        await AsyncStorage.setItem(THEME_KEY, theme);
+    } catch (e) {
+        console.error('Error saving theme', e);
+    }
+};
+
+export const getTheme = async () => {
+    try {
+        const value = await AsyncStorage.getItem(THEME_KEY);
+        return value !== null ? value : 'light';
+    } catch (e) {
+        console.error('Error getting theme', e);
+        return 'light';
     }
 };

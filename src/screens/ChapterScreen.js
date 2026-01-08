@@ -4,11 +4,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, useAnimatedStyle, useAnimatedScrollHandler } from 'react-native-reanimated';
 import { useFocusEffect } from '@react-navigation/native';
-import { COLORS, SPACING } from '../constants/theme';
+import { SPACING } from '../constants/theme';
 import { getFontSize, saveFontSize, saveLastRead, getLanguage, getShowTransliteration, getQuranStyle } from '../utils/storage';
 import { getChapterData, getChapterIndex, getLocalizedString } from '../utils/languageMappings';
+import { useTheme } from '../utils/ThemeContext';
 
 const ChapterScreen = ({ route, navigation }) => {
+    const { colors, theme } = useTheme();
     const insets = useSafeAreaInsets();
     const { chapterId, chapterName, chapterTransliteration, chapterTranslation, initialVerseId } = route.params;
     const [data, setData] = useState(null);
@@ -18,21 +20,17 @@ const ChapterScreen = ({ route, navigation }) => {
     const [quranStyle, setQuranStyle] = useState('Uthmani');
     const [language, setLanguage] = useState('en');
     const scrollY = useSharedValue(0);
-    const contentHeight = useSharedValue(0);
-    const layoutHeight = useSharedValue(0);
+    const currentVerseIndex = useSharedValue(0);
+    const totalVersesCount = useSharedValue(1);
     const flatListRef = React.useRef(null);
     const chapterIdRef = React.useRef(chapterId);
     const initialScrollDone = React.useRef(false);
 
-    // Update ref whenever chapterId changes
     useEffect(() => {
         chapterIdRef.current = chapterId;
-        initialScrollDone.current = false; // Reset for new chapter
-
-        // Reset scroll indicators
+        initialScrollDone.current = false;
         scrollY.value = 0;
-        contentHeight.value = 0;
-        layoutHeight.value = 0;
+        currentVerseIndex.value = 0;
     }, [chapterId]);
 
     useEffect(() => {
@@ -49,22 +47,24 @@ const ChapterScreen = ({ route, navigation }) => {
 
     useEffect(() => {
         if (!data) return;
-
-        if (initialVerseId > 1) {
-            const index = data.verses.findIndex(v => v.id === initialVerseId);
+        const targetVerse = Number(initialVerseId);
+        totalVersesCount.value = data.verses.length || 1;
+        if (targetVerse > 1) {
+            const index = data.verses.findIndex(v => Number(v.id) === targetVerse);
             if (index !== -1) {
-                // Small delay to ensure FlatList is ready
+                initialScrollDone.current = false;
                 setTimeout(() => {
-                    flatListRef.current?.scrollToIndex({
-                        index,
-                        animated: false,
-                        viewPosition: 0
-                    });
-                    // Mark as done after a bit more time to let viewability settle
-                    setTimeout(() => {
-                        initialScrollDone.current = true;
-                    }, 500);
-                }, 300); // Increased delay slightly
+                    if (flatListRef.current) {
+                        flatListRef.current.scrollToIndex({
+                            index,
+                            animated: false,
+                            viewPosition: 0
+                        });
+                        setTimeout(() => {
+                            initialScrollDone.current = true;
+                        }, 1000);
+                    }
+                }, 500);
             } else {
                 initialScrollDone.current = true;
             }
@@ -75,9 +75,12 @@ const ChapterScreen = ({ route, navigation }) => {
 
     const onViewableItemsChanged = React.useRef(({ viewableItems }) => {
         if (viewableItems.length > 0) {
-            const verseId = viewableItems[0].item.id;
+            const firstItem = viewableItems[0];
+            const index = firstItem.index;
+            const verseId = Number(firstItem.item.id);
+            currentVerseIndex.value = index;
             if (initialScrollDone.current) {
-                saveLastRead(chapterIdRef.current, verseId);
+                saveLastRead(Number(chapterIdRef.current), verseId);
             }
         }
     }).current;
@@ -89,16 +92,13 @@ const ChapterScreen = ({ route, navigation }) => {
     const handleScroll = useAnimatedScrollHandler({
         onScroll: (event) => {
             scrollY.value = event.contentOffset.y;
-            contentHeight.value = event.contentSize.height;
-            layoutHeight.value = event.layoutMeasurement.height;
         },
     });
 
     const progressBarStyle = useAnimatedStyle(() => {
-        const totalHeight = contentHeight.value - layoutHeight.value;
-        const progress = totalHeight > 0 ? scrollY.value / totalHeight : 0;
+        const progress = currentVerseIndex.value / (totalVersesCount.value - 1 || 1);
         return {
-            width: `${Math.max(0, Math.min(1, progress)) * 100}%`,
+            width: `${Math.min(Math.max(progress * 100, 0), 100)}%`,
         };
     });
 
@@ -106,16 +106,12 @@ const ChapterScreen = ({ route, navigation }) => {
         const lang = await getLanguage();
         setLanguage(lang);
         const isLanguageMatch = route.params?.language === lang;
-
         if (!data || !isLanguageMatch) {
             setLoading(true);
         }
-
         try {
             const content = getChapterData(lang, chapterId);
             setData(content);
-
-            // Sync navigation params for the header if they changed
             if (!isLanguageMatch) {
                 navigation.setParams({
                     chapterName: content.name,
@@ -142,10 +138,38 @@ const ChapterScreen = ({ route, navigation }) => {
         setQuranStyle(style);
     };
 
+    const itemLayouts = React.useMemo(() => {
+        if (!data?.verses) return [];
+        let currentOffset = 0;
+        return data.verses.map((verse) => {
+            const arabicLines = Math.ceil((verse.text?.length || 0) / 35);
+            const translationLines = Math.ceil((verse.translation?.length || 0) / 45);
+            const transliterationLines = showTransliteration ? Math.ceil((verse.transliteration?.length || 0) / 45) : 0;
+            const verseHeight =
+                (arabicLines * (fontSize + 18)) +
+                (translationLines * (fontSize + 12)) +
+                (transliterationLines * (fontSize + 8)) +
+                60;
+            const layout = { length: verseHeight, offset: currentOffset };
+            currentOffset += verseHeight;
+            return layout;
+        });
+    }, [data, fontSize, showTransliteration]);
+
+    const getItemLayout = useCallback((data, index) => {
+        if (!itemLayouts[index]) {
+            return { length: 200, offset: 200 * index, index };
+        }
+        return {
+            length: itemLayouts[index].length,
+            offset: itemLayouts[index].offset,
+            index,
+        };
+    }, [itemLayouts]);
+
     const handleNextChapter = () => {
         const chapters = getChapterIndex(language);
         const currentIndex = chapters.findIndex(c => Number(c.id) === Number(chapterId));
-
         if (currentIndex !== -1 && currentIndex < chapters.length - 1) {
             const nextChapter = chapters[currentIndex + 1];
             navigation.navigate('Chapter', {
@@ -162,22 +186,21 @@ const ChapterScreen = ({ route, navigation }) => {
     };
 
     const renderFooter = () => {
-        const chapters = getChapterIndex(language);
         const isLastChapter = Number(chapterId) === 114;
-
         return (
             <View style={styles.footer}>
                 <TouchableOpacity
-                    style={styles.nextButton}
+                    style={[styles.nextButton, { backgroundColor: colors.accent, shadowColor: colors.accent }]}
                     onPress={handleNextChapter}
                     activeOpacity={0.8}
                 >
-                    <Text style={styles.nextButtonText}>
+                    <Text style={[styles.nextButtonText, { color: colors.surface }]}>
                         {isLastChapter ? getLocalizedString(language, 'backToBeginning') : getLocalizedString(language, 'nextChapter')}
-                    </Text><Ionicons
+                    </Text>
+                    <Ionicons
                         name={isLastChapter ? "menu-outline" : "chevron-forward"}
                         size={20}
-                        color={COLORS.surface}
+                        color={colors.surface}
                         style={{ marginLeft: 8 }}
                     />
                 </TouchableOpacity>
@@ -187,40 +210,39 @@ const ChapterScreen = ({ route, navigation }) => {
 
     if (loading) {
         return (
-            <View style={styles.centered}>
-                <ActivityIndicator size="large" color={COLORS.accent} />
+            <View style={[styles.centered, { backgroundColor: colors.background }]}>
+                <ActivityIndicator size="large" color={colors.accent} />
             </View>
         );
     }
 
     return (
-        <View style={styles.container}>
-            <View style={styles.progressBarContainer}>
-                <Animated.View style={[styles.progressBar, progressBarStyle]} />
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <View style={[styles.progressBarContainer, { backgroundColor: colors.background, borderBottomColor: colors.border, borderBottomWidth: 1 }]}>
+                <Animated.View style={[styles.progressBar, { backgroundColor: colors.accent }, progressBarStyle]} />
             </View>
 
             <Animated.FlatList
-                key={`chapter-list-${chapterId}`}
+                key={`chapter-list-${chapterId}-${theme}`}
                 ref={flatListRef}
                 data={data?.verses}
                 keyExtractor={(item) => `${chapterId}-${item.id}`}
-                extraData={`${chapterId}-${fontSize}-${showTransliteration}-${quranStyle}`}
+                extraData={`${chapterId}-${fontSize}-${showTransliteration}-${quranStyle}-${theme}`}
                 contentContainerStyle={styles.scrollContent}
                 onViewableItemsChanged={onViewableItemsChanged}
                 viewabilityConfig={viewabilityConfig}
                 onScroll={handleScroll}
                 scrollEventThrottle={16}
                 showsVerticalScrollIndicator={false}
-                persistentScrollbar={true}
-                initialNumToRender={10}
+                initialNumToRender={20}
                 maxToRenderPerBatch={10}
-                windowSize={5}
-                removeClippedSubviews={true}
+                windowSize={11}
+                removeClippedSubviews={false}
+                getItemLayout={getItemLayout}
                 onScrollToIndexFailed={(info) => {
-                    const wait = new Promise(resolve => setTimeout(resolve, 500));
-                    wait.then(() => {
+                    setTimeout(() => {
                         flatListRef.current?.scrollToIndex({ index: info.index, animated: false });
-                    });
+                    }, 500);
                 }}
                 renderItem={({ item: verse }) => (
                     <VerseItem verse={verse} fontSize={fontSize} chapterId={chapterId} showTransliteration={showTransliteration} quranStyle={quranStyle} />
@@ -231,29 +253,48 @@ const ChapterScreen = ({ route, navigation }) => {
     );
 };
 
+const VerseItem = React.memo(({ verse, fontSize, chapterId, showTransliteration, quranStyle }) => {
+    const { colors } = useTheme();
+    const arabicFont = quranStyle === 'Uthmani' ? 'Amiri_400Regular' : 'NotoNaskhArabic_400Regular';
+
+    return (
+        <View style={[styles.verseContainer, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.arabicText, { fontSize: fontSize + 8, fontFamily: arabicFont, color: colors.textPrimary }]}>
+                {verse.text} <Text style={[styles.verseNumber, { color: colors.textSecondary }]}>{verse.id}</Text>
+            </Text>
+
+            {showTransliteration && (
+                <Text style={[styles.transliterationText, { fontSize: fontSize - 2, color: colors.textSecondary }]}>
+                    {verse.transliteration}
+                </Text>
+            )}
+
+            <Text style={[styles.translationText, { fontSize: fontSize, color: colors.textPrimary }]}>
+                {verse.translation}
+            </Text>
+        </View>
+    );
+});
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.background,
     },
     centered: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: COLORS.background,
     },
     scrollContent: {
         padding: SPACING.md,
     },
     progressBarContainer: {
-        height: 4,
-        backgroundColor: COLORS.background,
+        height: 6,
         width: '100%',
         overflow: 'hidden',
     },
     progressBar: {
         height: '100%',
-        backgroundColor: COLORS.accent,
         borderTopRightRadius: 2,
         borderBottomRightRadius: 2,
     },
@@ -261,22 +302,18 @@ const styles = StyleSheet.create({
         marginBottom: SPACING.xl * 1.5,
         paddingBottom: SPACING.lg,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.background,
     },
     arabicText: {
         textAlign: 'right',
-        color: COLORS.textPrimary,
         marginBottom: SPACING.sm,
         lineHeight: 50,
     },
     translationText: {
-        color: COLORS.textSecondary,
         lineHeight: 24,
         letterSpacing: -0.3,
         fontFamily: 'Lora_400Regular',
     },
     transliterationText: {
-        color: '#424242', // Dark Grey (as before)
         fontStyle: 'italic',
         marginBottom: SPACING.xs,
         lineHeight: 24,
@@ -284,7 +321,6 @@ const styles = StyleSheet.create({
     },
     verseNumber: {
         fontSize: 14,
-        color: COLORS.textSecondary,
         fontFamily: 'Outfit_400Regular',
     },
     footer: {
@@ -295,44 +331,19 @@ const styles = StyleSheet.create({
     nextButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: COLORS.accent,
         paddingVertical: 14,
         paddingHorizontal: 32,
         borderRadius: 30,
         elevation: 4,
-        shadowColor: COLORS.accent,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 6,
     },
     nextButtonText: {
-        color: COLORS.surface,
         fontSize: 16,
         fontWeight: 'bold',
         fontFamily: 'Outfit_600SemiBold',
     },
-});
-
-const VerseItem = React.memo(({ verse, fontSize, chapterId, showTransliteration, quranStyle }) => {
-    const arabicFont = quranStyle === 'Uthmani' ? 'Amiri_400Regular' : 'NotoNaskhArabic_400Regular';
-
-    return (
-        <View style={styles.verseContainer}>
-            <Text style={[styles.arabicText, { fontSize: fontSize + 8, fontFamily: arabicFont }]}>
-                {verse.text} <Text style={styles.verseNumber}>{verse.id}</Text>
-            </Text>
-
-            {showTransliteration && (
-                <Text style={[styles.transliterationText, { fontSize: fontSize - 2 }]}>
-                    {verse.transliteration}
-                </Text>
-            )}
-
-            <Text style={[styles.translationText, { fontSize: fontSize }]}>
-                {verse.translation}
-            </Text>
-        </View>
-    );
 });
 
 export default ChapterScreen;

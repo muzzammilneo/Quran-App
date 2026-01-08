@@ -12,7 +12,8 @@ A premium, eye-friendly Quran reading application built with **React Native** an
 - **📏 Adjustable Typography**: 
     - Customize font sizes (12pt to 40pt) for both Arabic and translation text.
     - Toggle phonetic transliteration on or off to suit your preference.
-- **🎨 Premium Aesthetic**: A clean, modern UI using a curated grey-scale palette with vibrant orange accents to minimize eye strain.
+- **🌙 Dark Mode Support**: Toggle between light and dark themes with system-aware defaults and persistent settings.
+- **🎨 Premium Aesthetic**: A clean, modern UI with a curated color system (light/dark) and vibrant orange accents to minimize eye strain.
 - **⚡ High Performance**: Optimized with React Native Reanimated, `React.memo` for verse items, and the New Architecture (Fabric) for buttery-smooth scrolling.
 
 ## 🛠️ Tech Stack
