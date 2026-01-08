@@ -14,6 +14,7 @@ import ChapterScreen from './src/screens/ChapterScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import DrawerContent from './src/components/DrawerContent';
 import HeaderTitle from './src/components/HeaderTitle';
+import HeaderVerseCount from './src/components/HeaderVerseCount';
 import { getLastRead, getLanguage } from './src/utils/storage';
 import { getChapterIndex } from './src/utils/languageMappings';
 import { COLORS } from './src/constants/theme';
@@ -132,6 +133,13 @@ function AppContent() {
                                 chapterName={route.params?.chapterName}
                                 chapterTransliteration={route.params?.chapterTransliteration}
                                 chapterTranslation={route.params?.chapterTranslation}
+                            />
+                        ),
+                        headerRight: () => (
+                            <HeaderVerseCount
+                                currentVerseId={route.params?.currentVerseId}
+                                totalVerses={route.params?.totalVerses}
+                                language={route.params?.language}
                             />
                         ),
                         headerTitleAlign: 'left',

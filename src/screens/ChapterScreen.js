@@ -35,7 +35,10 @@ const ChapterScreen = ({ route, navigation }) => {
 
     useEffect(() => {
         loadChapter();
-        saveLastRead(chapterId, initialVerseId || 1);
+        const initialVerse = initialVerseId || 1;
+        saveLastRead(chapterId, initialVerse);
+        // Set initial verse in navigation params
+        navigation.setParams({ currentVerseId: initialVerse });
     }, [chapterId]);
 
     useFocusEffect(
@@ -47,8 +50,13 @@ const ChapterScreen = ({ route, navigation }) => {
 
     useEffect(() => {
         if (!data) return;
+        const total = data.verses.length || 1;
+        totalVersesCount.value = total;
+
+        // Update total verses in navigation params
+        navigation.setParams({ totalVerses: total });
+
         const targetVerse = Number(initialVerseId);
-        totalVersesCount.value = data.verses.length || 1;
         if (targetVerse > 1) {
             const index = data.verses.findIndex(v => Number(v.id) === targetVerse);
             if (index !== -1) {
@@ -79,6 +87,10 @@ const ChapterScreen = ({ route, navigation }) => {
             const index = firstItem.index;
             const verseId = Number(firstItem.item.id);
             currentVerseIndex.value = index;
+
+            // Sync current verse with navigation params
+            navigation.setParams({ currentVerseId: verseId });
+
             if (initialScrollDone.current) {
                 saveLastRead(Number(chapterIdRef.current), verseId);
             }
