@@ -58,9 +58,12 @@ function AppContent() {
                             chapterTranslation: chapter.translation,
                             language: lang,
                             initialVerseId: verseId,
+                            currentVerseId: verseId,
+                            totalVerses: chapter.total_verses,
                         });
                     }
                 } else {
+                    // Default to Al-Fatihah
                     const chapter = chapters.find(c => Number(c.id) === 1) || chapters[0];
                     setInitialRouteParams({
                         chapterId: chapter.id,
@@ -69,6 +72,8 @@ function AppContent() {
                         chapterTranslation: chapter.translation,
                         language: lang,
                         initialVerseId: 1,
+                        currentVerseId: 1,
+                        totalVerses: chapter.total_verses,
                     });
                 }
             } catch (e) {

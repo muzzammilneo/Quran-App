@@ -44,8 +44,16 @@ const ChapterScreen = ({ route, navigation }) => {
     useFocusEffect(
         useCallback(() => {
             loadSettings();
-            loadChapter();
-        }, [chapterId])
+            // Only reload chapter if data is missing or language changed
+            // This prevents jumping to top when just coming back from Settings without changes
+            const checkReload = async () => {
+                const lang = await getLanguage();
+                if (!data || language !== lang) {
+                    loadChapter();
+                }
+            };
+            checkReload();
+        }, [chapterId, language, data])
     );
 
     useEffect(() => {
@@ -56,7 +64,9 @@ const ChapterScreen = ({ route, navigation }) => {
         // Update total verses in navigation params
         navigation.setParams({ totalVerses: total });
 
-        const targetVerse = Number(initialVerseId);
+        // Prefer currentVerseId (which updates as we scroll) over initialVerseId
+        const targetVerse = Number(route.params?.currentVerseId || initialVerseId);
+
         if (targetVerse > 1) {
             const index = data.verses.findIndex(v => Number(v.id) === targetVerse);
             if (index !== -1) {
@@ -79,17 +89,36 @@ const ChapterScreen = ({ route, navigation }) => {
         } else {
             initialScrollDone.current = true;
         }
-    }, [data, initialVerseId]);
+    }, [data, initialVerseId, fontSize, showTransliteration]); // Note: We don't depend on currentVerseId here to avoid infinite loops, 
+    // it's only used as a default when data or settings change.
 
+    useEffect(() => {
+        if (route.params?.jumpToVerseId && data?.verses) {
+            const verseId = Number(route.params.jumpToVerseId);
+            const index = data.verses.findIndex(v => Number(v.id) === verseId);
+            if (index !== -1 && flatListRef.current) {
+                flatListRef.current.scrollToIndex({
+                    index,
+                    animated: true,
+                    viewPosition: 0
+                });
+            }
+        }
+    }, [route.params?.jumpToVerseId, route.params?.timestamp]);
+
+    const lastParamVerseId = React.useRef(null);
     const onViewableItemsChanged = React.useRef(({ viewableItems }) => {
-        if (viewableItems.length > 0) {
+        if (viewableItems.length > 0 && initialScrollDone.current) {
             const firstItem = viewableItems[0];
             const index = firstItem.index;
             const verseId = Number(firstItem.item.id);
-            currentVerseIndex.value = index;
 
-            // Sync current verse with navigation params
-            navigation.setParams({ currentVerseId: verseId });
+            if (lastParamVerseId.current !== verseId) {
+                lastParamVerseId.current = verseId;
+                currentVerseIndex.value = index;
+                // Sync current verse with navigation params
+                navigation.setParams({ currentVerseId: verseId });
+            }
 
             if (initialScrollDone.current) {
                 saveLastRead(Number(chapterIdRef.current), verseId);
@@ -98,7 +127,8 @@ const ChapterScreen = ({ route, navigation }) => {
     }).current;
 
     const viewabilityConfig = React.useRef({
-        itemVisiblePercentThreshold: 50
+        itemVisiblePercentThreshold: 1,
+        minimumViewTime: 0,
     }).current;
 
     const handleScroll = useAnimatedScrollHandler({
@@ -120,6 +150,7 @@ const ChapterScreen = ({ route, navigation }) => {
         const isLanguageMatch = route.params?.language === lang;
         if (!data || !isLanguageMatch) {
             setLoading(true);
+            initialScrollDone.current = false;
         }
         try {
             const content = getChapterData(lang, chapterId);
@@ -191,6 +222,8 @@ const ChapterScreen = ({ route, navigation }) => {
                 chapterTranslation: nextChapter.translation,
                 language: language,
                 initialVerseId: 1,
+                currentVerseId: 1,
+                totalVerses: nextChapter.total_verses,
             });
         } else {
             navigation.openDrawer();

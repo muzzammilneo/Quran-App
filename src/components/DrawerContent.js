@@ -17,7 +17,9 @@ const DrawerContent = (props) => {
     const [quranStyle, setQuranStyle] = useState('Uthmani');
 
     const drawerStatus = useDrawerStatus();
-    const activeChapterId = state.routes[state.index]?.params?.chapterId;
+    // More robust way to find active chapter even if we are on Settings screen
+    const chapterRoute = state.routes.find(route => route.name === 'Chapter');
+    const activeChapterId = chapterRoute?.params?.chapterId;
 
     useEffect(() => {
         if (drawerStatus === 'open') {
@@ -44,6 +46,10 @@ const DrawerContent = (props) => {
             <TouchableOpacity
                 style={[styles.item, { borderBottomColor: colors.background }, isActive && { backgroundColor: colors.activeItemBackground }]}
                 onPress={() => {
+                    if (isActive) {
+                        navigation.closeDrawer();
+                        return;
+                    }
                     navigation.navigate('Chapter', {
                         chapterId: item.id,
                         chapterName: item.name,
@@ -51,6 +57,8 @@ const DrawerContent = (props) => {
                         chapterTranslation: item.translation,
                         language: language,
                         initialVerseId: 1,
+                        currentVerseId: 1,
+                        totalVerses: item.total_verses,
                     });
                 }}
             >

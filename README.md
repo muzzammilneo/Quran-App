@@ -13,6 +13,7 @@ A premium, eye-friendly Quran reading application built with **React Native** an
     - Customize font sizes (12pt to 40pt) for both Arabic and translation text.
     - Toggle phonetic transliteration on or off to suit your preference.
 - **📉 Live Verse Counter**: Real-time progress tracking in the header (e.g., "Verse 5 / 286") that updates as you scroll.
+- **🎯 Quick Navigation**: Tap the verse counter in the header to open a modal and instantly jump to any verse in the chapter.
 - **🌙 Dark Mode Support**: Toggle between light and dark themes with system-aware defaults and persistent settings.
 - **🎨 Premium Aesthetic**: A clean, modern UI with a curated color system (light/dark) and vibrant orange accents to minimize eye strain.
 - **⚡ High Performance**: Optimized with React Native Reanimated, `React.memo` for verse items, and the New Architecture (Fabric) for buttery-smooth scrolling.
