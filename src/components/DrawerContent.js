@@ -19,7 +19,7 @@ const DrawerContent = (props) => {
     const drawerStatus = useDrawerStatus();
     // More robust way to find active chapter even if we are on Settings screen
     const chapterRoute = state.routes.find(route => route.name === 'Chapter');
-    const activeChapterId = chapterRoute?.params?.chapterId;
+    const activeChapterId = chapterRoute?.params?.chapterId ? Number(chapterRoute.params.chapterId) : null;
 
     useEffect(() => {
         if (drawerStatus === 'open') {
@@ -47,6 +47,7 @@ const DrawerContent = (props) => {
                 style={[styles.item, { borderBottomColor: colors.background }, isActive && { backgroundColor: colors.activeItemBackground }]}
                 onPress={() => {
                     if (isActive) {
+                        navigation.navigate('Chapter');
                         navigation.closeDrawer();
                         return;
                     }

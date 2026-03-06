@@ -31,6 +31,7 @@ export const getChapterIndex = (lang) => {
 export const LOCALIZED_STRINGS = {
   en: {
     quranChapters: 'Quran Chapters',
+    verse: 'Verse',
     verses: 'Verses',
     settings: 'Settings',
     translationLanguage: 'Translation Language',
@@ -48,6 +49,7 @@ export const LOCALIZED_STRINGS = {
   },
   bn: {
     quranChapters: 'কুরআন অধ্যায়',
+    verse: 'আয়াত',
     verses: 'আয়াত',
     settings: 'সেটিংস',
     translationLanguage: 'অনুবাদ ভাষা',
@@ -65,6 +67,7 @@ export const LOCALIZED_STRINGS = {
   },
   id: {
     quranChapters: 'Daftar Surah',
+    verse: 'Ayat',
     verses: 'Ayat',
     settings: 'Pengaturan',
     translationLanguage: 'Bahasa Terjemahan',
@@ -82,6 +85,7 @@ export const LOCALIZED_STRINGS = {
   },
   es: {
     quranChapters: 'Capítulos del Corán',
+    verse: 'Versículo',
     verses: 'Versículos',
     settings: 'Ajustes',
     translationLanguage: 'Idioma de traducción',
@@ -99,6 +103,7 @@ export const LOCALIZED_STRINGS = {
   },
   fr: {
     quranChapters: 'Chapitres du Coran',
+    verse: 'Verset',
     verses: 'Versets',
     settings: 'Paramètres',
     translationLanguage: 'Langue de traduction',
@@ -116,6 +121,7 @@ export const LOCALIZED_STRINGS = {
   },
   ru: {
     quranChapters: 'Суры Корана',
+    verse: 'Аят',
     verses: 'Аяты',
     settings: 'Настройки',
     translationLanguage: 'Язык перевода',
@@ -133,6 +139,7 @@ export const LOCALIZED_STRINGS = {
   },
   sv: {
     quranChapters: 'Koranens kapitel',
+    verse: 'Vers',
     verses: 'Verser',
     settings: 'Inställningar',
     translationLanguage: 'Översättningsspråk',
@@ -150,6 +157,7 @@ export const LOCALIZED_STRINGS = {
   },
   tr: {
     quranChapters: 'Kuran Sureleri',
+    verse: 'Ayet',
     verses: 'Ayetler',
     settings: 'Ayarlar',
     translationLanguage: 'Çeviri Dili',
@@ -167,6 +175,7 @@ export const LOCALIZED_STRINGS = {
   },
   ur: {
     quranChapters: 'قرآن کی سورتیں',
+    verse: 'آیت',
     verses: 'آیات',
     settings: 'ترتیبات',
     translationLanguage: 'ترجمہ کی زبان',
@@ -184,6 +193,7 @@ export const LOCALIZED_STRINGS = {
   },
   zh: {
     quranChapters: '古兰经章节',
+    verse: '节',
     verses: '节',
     settings: '设置',
     translationLanguage: '翻译语言',

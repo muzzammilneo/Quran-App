@@ -31,6 +31,7 @@ const ChapterScreen = ({ route, navigation }) => {
         initialScrollDone.current = false;
         scrollY.value = 0;
         currentVerseIndex.value = 0;
+        lastParamVerseId.current = null;
     }, [chapterId]);
 
     useEffect(() => {
@@ -64,8 +65,16 @@ const ChapterScreen = ({ route, navigation }) => {
         // Update total verses in navigation params
         navigation.setParams({ totalVerses: total });
 
-        // Prefer currentVerseId (which updates as we scroll) over initialVerseId
-        const targetVerse = Number(route.params?.currentVerseId || initialVerseId);
+        // Prefer lastParamVerseId (local state) over route params to prevent reset on re-render
+        // Then try currentVerseId from params, finally fallback to initialVerseId
+        let targetVerseId = initialVerseId;
+        if (lastParamVerseId.current) {
+            targetVerseId = lastParamVerseId.current;
+        } else if (route.params?.currentVerseId) {
+            targetVerseId = route.params.currentVerseId;
+        }
+
+        const targetVerse = Number(targetVerseId);
 
         if (targetVerse > 1) {
             const index = data.verses.findIndex(v => Number(v.id) === targetVerse);
@@ -268,7 +277,7 @@ const ChapterScreen = ({ route, navigation }) => {
             </View>
 
             <Animated.FlatList
-                key={`chapter-list-${chapterId}-${theme}`}
+                key={`chapter-list-${chapterId}`}
                 ref={flatListRef}
                 data={data?.verses}
                 keyExtractor={(item) => `${chapterId}-${item.id}`}

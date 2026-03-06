@@ -56,7 +56,6 @@ const HeaderVerseCount = ({ currentVerseId, totalVerses, language }) => {
                 style={[styles.container, { backgroundColor: isDark ? 'rgba(255, 152, 0, 0.15)' : 'rgba(245, 124, 0, 0.1)' }]}
             >
                 <Text style={[styles.text, { color: isDark ? colors.textPrimary : colors.textSecondary }]}>
-                    {getLocalizedString(language || 'en', 'verse')}{' '}
                     <Text style={{ color: colors.accent }}>{currentVerseId || '-'}</Text> / {totalVerses || '-'}
                 </Text>
             </TouchableOpacity>
@@ -75,7 +74,7 @@ const HeaderVerseCount = ({ currentVerseId, totalVerses, language }) => {
                     <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
                         <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
                             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-                                {getLocalizedString(language || 'en', 'quranChapters')} - {getLocalizedString(language || 'en', 'verse')}
+                                Select Verse
                             </Text>
                             <TouchableOpacity onPress={() => setModalVisible(false)}>
                                 <Text style={{ color: colors.accent, fontWeight: 'bold' }}>Close</Text>
